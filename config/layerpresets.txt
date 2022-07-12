@@ -1,0 +1,34 @@
+None,None
+Main,Default LayerPreset - Not really used anywhere
+Cover,To be removed?
+Character,Used on character colliders
+CharacterAI,Special LayerPreset with layer just for AI
+Projectile,Used by projectiles (bullets, rockets) - Interacts with FireGeometry
+Vehicle,Collides with static and dynamic objects like buildings/props/other vehicles/etc.
+VehicleFire,Same as Vehcile + Fire Geometry Layer
+VehicleFireView,Same as VehicleFire + View Geometry Layer
+ItemFireView,Used on props and items where collision with player is not desired - e.g. really small objects
+Door,Used on doors
+DoorFireView,Used on doors + FireGeo and ViewGeo layers
+Weapon,Used on weapons
+Terrain,Special preset for terrain mesh - is set in GenericTerrainEntity/ Use on Terrain Meshes 
+Prop,Used on dynamic assets/props
+PropView,Same as Props + View Geometry layer
+PropFireView,Used on props that only have a single collision Geometry (no separate FireGeo)
+Tree,Used on tree/bush trunks (hard parts)
+TreeFireView,Used on tree/bush trunks (hard parts) where one collider can be used for both collision with soldier and then as Fire Geometry
+TreePart,Used on tree parts - branches, twigs, etc.
+CharNoCollide,Not used?
+FireGeo,Collides only with projectiles
+Building,Used on buildings as they use static colliders (+ special layer for detecting for Navmesh)
+BuildingFire,Same as building + FireGeo layer
+BuildingFireView,Same as BuildingFire + View Geometry layer
+RockFireView,Used on rocks
+Debris,Used on small debris pieces which should not collide with dynamic assets
+Interaction,Not used?
+Ladder,Used on ladders, mainly for detecting ladder itself, so player can "snap" on it, but also used as collision
+Bush,Used on "soft" parts of bushes
+Foliage,Used on "soft" parts of trees - leaves, needles
+Wheel,Used on vehicle wheels
+Glass,Used on glass, in case Fire Geometry would need to be separated from normal collisions
+GlassFire,Same as above + Fire Geometry layer
