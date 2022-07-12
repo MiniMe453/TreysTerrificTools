@@ -4,6 +4,8 @@ import ntpath
 import re
 import configparser
 from random import random
+import bmesh
+from mathutils import Vector, Matrix
 
 PKG = __package__
 
@@ -83,9 +85,9 @@ def save_settings(name, property):
     with open(__file__[:-9] + "\\settings.ini", 'w') as configfile:
         config.write(configfile)
 
-def ttt_load_layer_presets_config():
+def ttt_load_config_file(filen):
     dirname = os.path.dirname(__file__)
-    filename = os.path.join(dirname,'config/layerpresets.txt')
+    filename = os.path.join(dirname,'config/',filen)
 
     f = open(filename)
     file = f.read().split("\n")
@@ -97,11 +99,10 @@ def ttt_get_layer_presets():
     layerPresets = []
 
     i = 0
-    for line in ttt_load_layer_presets_config():
+    for line in ttt_load_config_file('layerpresets.txt'):
         splitLine = line.split(",")
         layerPresets.append((splitLine[0],splitLine[0],splitLine[1],i))
         i += 1
-        print(splitLine[0])
     
     return layerPresets
 
@@ -132,7 +133,7 @@ def ttt_get_currently_selected_layer_preset(context):
 def ttt_get_gamemats():
     return False
 
-def ttt_assgin_gamemat(name):
+def ttt_assgin_gamemat(name, obj):
     editMode = False
     gamemat = []
     index = 0
@@ -207,18 +208,15 @@ def ttt_assgin_gamemat(name):
             print('No Faces Selected')
             bpy.ops.object.mode_set(mode='EDIT')
     else:
-        selected = list(bpy.context.view_layer.objects.selected)
+        if obj.data.materials:
+            obj.data.materials.clear()
+        obj.data.materials.append(gamemat)
 
-        for ob in selected:  # for selected objests delete all material slots and append wanted gamemat
-            if ob.data.materials:
-                ob.data.materials.clear()
-            ob.data.materials.append(gamemat)
-
-def ttt_update_gamemats(context):
+def ttt_update_gamemats(context, obj):
     gameMatIndex = context.scene.ttt_collision_data["ttt_gamemats"]
     if(gameMatIndex == 0):
         return
-    ttt_assgin_gamemat(bpy.types.Scene.ttt_gamemats_enum[gameMatIndex][2])
+    ttt_assgin_gamemat(bpy.types.Scene.ttt_gamemats_enum[gameMatIndex][2],obj)
 
 def ttt_get_game_materials():
     gamematerials = {}
@@ -246,3 +244,89 @@ def ttt_get_game_materials():
     for i in sorted (gamematerials) :
         gamematerialsTemp[i] = gamematerials[i]
     return gamematerialsTemp
+
+def ttt_get_collider_types():
+    collidertypes = []
+
+    i = 0
+    for line in ttt_load_config_file('collidertypes.txt'):
+        splitLine = line.split(",")
+        collidertypes.append((splitLine[0],splitLine[1],splitLine[2],i))
+        i += 1
+
+    return collidertypes
+
+def ttt_collider_types_callback(self, context):
+    types = bpy.types.Scene.ttt_collider_types_enum
+    return types
+
+def ttt_collider_types_update(self, context):
+    print("Collider Option Changed")
+
+def ttt_generate_collider(context, obj):
+    colliderTypeIndex = context.scene.ttt_collision_data["ttt_collidertypes"]
+    selectedCollider = bpy.types.Scene.ttt_collider_types_enum[colliderTypeIndex][0]
+
+    if(selectedCollider == "UCX"):
+        return convexhull_collider(selectedCollider, obj)
+    elif(selectedCollider == "UBX"):
+        return box_collider(selectedCollider,obj)
+    else:
+        print(selectedCollider)
+        return obj
+
+def box_collider(selectedCollider,obj):
+    scale = obj.scale
+    
+    minx = obj.bound_box[0][0] * scale.x
+    maxx = obj.bound_box[4][0] * scale.x
+    miny = obj.bound_box[0][1] * scale.y
+    maxy = obj.bound_box[2][1] * scale.y
+    minz = obj.bound_box[0][2] * scale.z
+    maxz = obj.bound_box[1][2] * scale.z
+    dx = maxx - minx
+    dy = maxy - miny
+    dz = maxz - minz
+
+    new_name = '{0}_{1}'.format(selectedCollider, obj.name)
+    
+    loc =  Vector(((minx + 0.5* dx), (miny + 0.5* dy), (minz + 0.5* dz)))
+    loc.rotate(obj.rotation_euler)
+    loc = loc + obj.location
+    
+    bpy.ops.mesh.primitive_cube_add(location=loc, rotation=obj.rotation_euler)
+    collider = bpy.context.object
+    
+    collider.name = new_name
+    collider.dimensions = Vector((dx, dy, dz))
+    
+    return collider
+
+
+#Code from Martynas Žiemys - https://blender.stackexchange.com/users/60759/martynas-%c5%bdiemys
+def convexhull_collider(selectedCollider, obj):
+    context = bpy.context
+    scene = context.scene
+    me = obj.data
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    copy = obj.copy()
+
+    me = bpy.data.meshes.new("%s convexhull" % me.name)
+    ch = bmesh.ops.convex_hull(bm, input=bm.verts)
+    bmesh.ops.delete(
+            bm,
+            geom=ch["geom_unused"] + ch["geom_interior"],
+            context='VERTS',
+            )
+    bm.to_mesh(me)
+    copy.name = "%s_%s" % (selectedCollider, obj.name)
+    copy.data = me
+
+    print(obj.users_collection)
+
+    obj.users_collection[0].objects.link(copy)
+
+    
+
+    return copy

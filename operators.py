@@ -46,15 +46,18 @@ class TTT_OT_TestCollisionEnum(bpy.types.Operator):
 
     def execute(self,context):
         selected = list(bpy.context.view_layer.objects.selected)
+        generatedColliders = []
 
         for obj in selected:
-            obj["CollisionLayer"] = utils.ttt_get_currently_selected_layer_preset(context)
-            utils.ttt_update_gamemats(context)
+            colliderObj = utils.ttt_generate_collider(context, obj)
+            utils.ttt_update_gamemats(context, colliderObj)
+            colliderObj["CollisionLayer"] = utils.ttt_get_currently_selected_layer_preset(context)
+            generatedColliders.append(colliderObj)
     
         return{'FINISHED'}
     
     def invoke(self, context, event):
-        selected = list(bpy.context.view_layer.objects.selected)
+        selected = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
         if(selected == []):
             utils.show_message_box(["No object is selected!"])
             return {'CANCELLED'}
@@ -72,6 +75,9 @@ class TTT_OT_TestCollisionEnum(bpy.types.Operator):
 
         bpy.types.Scene.ttt_gamemats_enum = enum_gamemats_items
 
+        enum_collidertypes_items = utils.ttt_get_collider_types()
+        bpy.types.Scene.ttt_collider_types_enum = enum_collidertypes_items
+
         wm = context.window_manager
         return wm.invoke_props_dialog(self)
 
@@ -81,6 +87,7 @@ class TTT_OT_TestCollisionEnum(bpy.types.Operator):
         row = layout.row()
         box = row.box()
         box.alignment = "CENTER"
+        box.prop(context.scene.ttt_collision_data, "ttt_collidertypes")
         box.prop(context.scene.ttt_collision_data, "ttt_gamemats")
         box.prop(context.scene.ttt_collision_data, "ttt_layerpresets")
 
@@ -95,3 +102,4 @@ class TTT_ColliderEnumItems(bpy.types.PropertyGroup):
 
     ttt_gamemats : bpy.props.EnumProperty(items=utils.ttt_gamemat_items_callback, name = "Game Material", update = utils.ttt_update_gamemats_enum)
     ttt_layerpresets : bpy.props.EnumProperty(items=utils.ttt_layerspresets_items_callback, name = "Layer Presets", update = utils.ttt_update_layer_preset_enum)
+    ttt_collidertypes : bpy.props.EnumProperty(items=utils.ttt_collider_types_callback, name = "Collider Types", update = utils.ttt_collider_types_update)

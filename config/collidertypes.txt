@@ -1,0 +1,6 @@
+None,No Collider,Use the selected mesh as the collider
+UBX,Box,A simple box shape
+UCX,Convex Hull,A complex convex hull
+USP,Sphere,A sphere: This is the most performant
+UCS,Capsule,A capsule. Used mostly for characters
+UCL,Cylinder,A cylinder

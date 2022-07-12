@@ -1,3 +1,9 @@
+#This requires the BlenderEnfusionTools-Data from Bohemia Interactive
+#to work properly. 
+#
+#Special thanks to Bohemia for provided many of the functions used
+#inside this code.
+
 bl_info = {
     "name" : "Trey's Terrific Tools",
     "author" : "Trey Ramm",
