@@ -14,3 +14,6 @@ class TTT_PT_CollisionSetup(Panel):
 
         row = layout.row()
         row.operator("view3d.ttt_set_collision_properties", text = "Set up Collision Layers")
+
+        row = layout.row()
+        row.operator("view3d.ttt_move_obj_to_collection", text="Move objects to collections")

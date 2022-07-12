@@ -51,7 +51,7 @@ class TTT_OT_TestCollisionEnum(bpy.types.Operator):
         for obj in selected:
             colliderObj = utils.ttt_generate_collider(context, obj)
             utils.ttt_update_gamemats(context, colliderObj)
-            colliderObj["CollisionLayer"] = utils.ttt_get_currently_selected_layer_preset(context)
+            colliderObj["usage"] = utils.ttt_get_currently_selected_layer_preset(context)
             generatedColliders.append(colliderObj)
     
         return{'FINISHED'}
@@ -103,3 +103,36 @@ class TTT_ColliderEnumItems(bpy.types.PropertyGroup):
     ttt_gamemats : bpy.props.EnumProperty(items=utils.ttt_gamemat_items_callback, name = "Game Material", update = utils.ttt_update_gamemats_enum)
     ttt_layerpresets : bpy.props.EnumProperty(items=utils.ttt_layerspresets_items_callback, name = "Layer Presets", update = utils.ttt_update_layer_preset_enum)
     ttt_collidertypes : bpy.props.EnumProperty(items=utils.ttt_collider_types_callback, name = "Collider Types", update = utils.ttt_collider_types_update)
+
+class TTT_MoveObjectsToCollection(bpy.types.Operator):
+    bl_idname = "view3d.ttt_move_obj_to_collection"
+    bl_label = "Move objects to a collection based on their names"
+    bl_description = "Move Objects"
+    bl_options = {"REGISTER","UNDO"}
+
+    def execute(self, context):
+        scene = context.scene
+        objs = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
+
+        for o in objs:
+            collName = o.name
+            
+            if(collName.find('_LOD') != -1):
+                collName = collName[:collName.find('_LOD')]
+
+            for enum in utils.ttt_get_collider_types():
+                if(collName.find(enum[0] + "_") != -1):
+                    collName = collName[collName.find(enum[0] + "_")+4:]
+                
+            coll = bpy.data.collections.get(collName)
+            
+            if not coll:
+                coll = bpy.data.collections.new(collName)
+                scene.collection.children.link(coll)
+            
+            for c in o.users_collection:
+                c.objects.unlink(o)
+            
+            coll.objects.link(o)
+
+        return{'FINISHED'}

@@ -313,10 +313,10 @@ def convexhull_collider(selectedCollider, obj):
     copy = obj.copy()
 
     me = bpy.data.meshes.new("%s convexhull" % me.name)
-    ch = bmesh.ops.convex_hull(bm, input=bm.verts)
+    ch = bmesh.ops.convex_hull(bm, input=bm.verts,use_existing_faces=True)
     bmesh.ops.delete(
             bm,
-            geom=ch["geom_unused"] + ch["geom_interior"],
+            geom=ch["geom_unused"] + ch["geom_interior"] + ch["geom_holes"],
             context='VERTS',
             )
     bm.to_mesh(me)
