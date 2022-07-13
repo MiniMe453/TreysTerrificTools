@@ -6,6 +6,7 @@ import configparser
 from random import random
 import bmesh
 from mathutils import Vector, Matrix
+from scipy.fft import get_workers
 
 PKG = __package__
 
@@ -271,37 +272,27 @@ def ttt_generate_collider(context, obj):
         return convexhull_collider(selectedCollider, obj)
     elif(selectedCollider == "UBX"):
         return box_collider(selectedCollider,obj)
+    elif(selectedCollider == "USP"):
+        return sphere_collider(selectedCollider,obj)
     else:
         print(selectedCollider)
         return obj
 
 def box_collider(selectedCollider,obj):
-    scale = obj.scale
-    
-    minx = obj.bound_box[0][0] * scale.x
-    maxx = obj.bound_box[4][0] * scale.x
-    miny = obj.bound_box[0][1] * scale.y
-    maxy = obj.bound_box[2][1] * scale.y
-    minz = obj.bound_box[0][2] * scale.z
-    maxz = obj.bound_box[1][2] * scale.z
-    dx = maxx - minx
-    dy = maxy - miny
-    dz = maxz - minz
+    #[[dx,dy,dz],[minx,miny,minz],[maxx,maxy,maxz]]
+    objSize = get_object_size(obj)
 
-    new_name = '{0}_{1}'.format(selectedCollider, obj.name)
+    new_name = "%s_%s" % (selectedCollider, obj.name)
     
-    loc =  Vector(((minx + 0.5* dx), (miny + 0.5* dy), (minz + 0.5* dz)))
-    loc.rotate(obj.rotation_euler)
-    loc = loc + obj.location
+    loc =  get_object_world_location(obj)
     
     bpy.ops.mesh.primitive_cube_add(location=loc, rotation=obj.rotation_euler)
     collider = bpy.context.object
     
     collider.name = new_name
-    collider.dimensions = Vector((dx, dy, dz))
+    collider.dimensions = Vector((objSize[0][0], objSize[0][1], objSize[0][2]))
     
     return collider
-
 
 #Code from Martynas Žiemys - https://blender.stackexchange.com/users/60759/martynas-%c5%bdiemys
 def convexhull_collider(selectedCollider, obj):
@@ -327,6 +318,101 @@ def convexhull_collider(selectedCollider, obj):
 
     obj.users_collection[0].objects.link(copy)
 
-    
-
     return copy
+
+def sphere_collider(selectedCollider, obj):
+    #X, Y, Z
+    objSize = get_object_size(obj)[0]
+    objRadius = max(objSize)/2
+    location = get_object_world_location(obj)
+
+    # Create an empty mesh and the object.
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=objRadius,location=location,rotation=obj.rotation_euler)
+    collider = bpy.context.object
+
+    collider.name = "%s_%s" % (selectedCollider,obj.name)
+
+    return collider
+
+def cylinder_collider(selectedCollider, obj):
+    #X, Y, Z
+    objSize = get_object_size(obj)[0]
+    objRadius = max(objSize)/2
+    location = get_object_world_location(obj)
+
+
+
+    collider = bpy.context.object
+
+    collider.name = "%s_%s" % (selectedCollider,obj.name)
+
+    return collider
+
+def get_object_size(obj):
+    scale = obj.scale
+    
+    minx = obj.bound_box[0][0] * scale.x
+    maxx = obj.bound_box[4][0] * scale.x
+    miny = obj.bound_box[0][1] * scale.y
+    maxy = obj.bound_box[2][1] * scale.y
+    minz = obj.bound_box[0][2] * scale.z
+    maxz = obj.bound_box[1][2] * scale.z
+    dx = maxx - minx
+    dy = maxy - miny
+    dz = maxz - minz
+
+    return [[dx,dy,dz],[minx,miny,minz],[maxx,maxy,maxz]]
+
+def get_object_world_location(obj):
+    objSize = get_object_size(obj)
+
+    loc = Vector(((objSize[1][0] + 0.5* objSize[0][0]), (objSize[1][1] + 0.5* objSize[0][1]), (objSize[1][2] + 0.5* objSize[0][2])))
+    loc.rotate(obj.rotation_euler)
+    loc = loc + obj.location
+
+    return loc
+
+
+
+def ttt_get_selection_masks():
+    selectionMasks = []
+
+    i = 0
+    
+    for line in ttt_load_config_file("selectionmasks.txt"):
+        selectionMasks.append((line, line, line, i))
+        i += 1
+    
+    return selectionMasks
+
+def ttt_selection_masks_callback(self, context):
+    items = bpy.types.Scene.ttt_selectionmask_enum
+    return items
+
+def ttt_get_selection_mask(context):
+    selectionMaskIndex = context.scene.ttt_collision_data["ttt_selectionmasks"]
+    selectedMask = bpy.types.Scene.ttt_selectionmask_enum[selectionMaskIndex][0]
+    return selectedMask
+
+def ttt_selection_masks_update(self, context):
+    selectionMaskIndex = context.scene.ttt_collision_data["ttt_selectionmasks"]
+    selectedMask = bpy.types.Scene.ttt_selectionmask_enum[selectionMaskIndex][0]
+    
+    
+    print(selectedMask)
+    
+    objs = bpy.context.selectable_objects
+
+    for o in objs:
+        o.select_set(False)
+
+    if(selectedMask == "None"):
+        return
+    elif(selectedMask != "Colliders"):
+        objs = [obj for obj in bpy.context.view_layer.objects if obj.name.find(selectedMask) != -1] 
+    else:
+        objs = [obj for obj in bpy.context.view_layer.objects if obj.name.find("_") == 3] 
+            
+ 
+    for o in objs:
+        o.select_set(True)
