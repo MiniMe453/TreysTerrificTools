@@ -17,3 +17,16 @@ class TTT_PT_CollisionSetup(Panel):
 
         row = layout.row()
         row.operator("view3d.ttt_move_obj_to_collection", text="Move objects to collections")
+
+class TTT_PT_ObjectSelection(Panel):
+    bl_category = "Trey's Terrific Tools"
+    bl_label = "Object Selection Tools"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+
+    def draw(self, context):
+        scene = context.scene
+        layout = self.layout
+
+        row = layout.row()
+        row.prop(context.scene.ttt_collision_data, "ttt_selectionmasks")

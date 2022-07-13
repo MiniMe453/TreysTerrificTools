@@ -95,6 +95,7 @@ class TTT_ColliderEnumItems(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Scene.ttt_collision_data = bpy.props.PointerProperty(type=TTT_ColliderEnumItems)
+        bpy.types.Scene.ttt_selectionmask_enum = utils.ttt_get_selection_masks()
 
     @classmethod
     def unregister(cls):
@@ -103,6 +104,7 @@ class TTT_ColliderEnumItems(bpy.types.PropertyGroup):
     ttt_gamemats : bpy.props.EnumProperty(items=utils.ttt_gamemat_items_callback, name = "Game Material", update = utils.ttt_update_gamemats_enum)
     ttt_layerpresets : bpy.props.EnumProperty(items=utils.ttt_layerspresets_items_callback, name = "Layer Presets", update = utils.ttt_update_layer_preset_enum)
     ttt_collidertypes : bpy.props.EnumProperty(items=utils.ttt_collider_types_callback, name = "Collider Types", update = utils.ttt_collider_types_update)
+    ttt_selectionmasks : bpy.props.EnumProperty(items=utils.ttt_selection_masks_callback, name = "Selection Masks", update = utils.ttt_selection_masks_update)
 
 class TTT_MoveObjectsToCollection(bpy.types.Operator):
     bl_idname = "view3d.ttt_move_obj_to_collection"
@@ -136,3 +138,4 @@ class TTT_MoveObjectsToCollection(bpy.types.Operator):
             coll.objects.link(o)
 
         return{'FINISHED'}
+

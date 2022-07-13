@@ -153,7 +153,8 @@ classes = [
     operators.TTT_OT_TestOperator,
     operators.TTT_OT_TestCollisionEnum,
     operators.TTT_MoveObjectsToCollection,
-    panels.TTT_PT_CollisionSetup
+    panels.TTT_PT_CollisionSetup,
+    panels.TTT_PT_ObjectSelection
     
 ]
 
